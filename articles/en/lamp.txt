@@ -1,0 +1,153 @@
+LAMP == Lighttpd ArchLinux MySQL and PHP (A new concept ;))
+
+Usually many developers are interested in learning LAMP, why? simply, is the easiest platform to develop web applications. It's called LAMP the acronymn
+of Linux + Apache + MySQL + PHP (and many modifications of this last could be applied, by example: Python or Perl), in this Article you will discover 
+another point of view, as i said in the title this article will talk about Lighttpd, ArchLinux MySQL and PHP.
+
+Why Lighttpd?
+
+Eventually when we are starting in the web developing world, we don't need a huge web server like Apache, but don't think that lighttpd is a 'toy'
+tiny and powerful, many big sites use it, by example:
+
+* Wikimedia (Wikipedia) http://www.wikipedia.org
+* SourceForge http://www.sourceforge.net
+* Youtube http://www.youtube.com
+
+That told us that lighttpd could be powerful and tiny ;)
+
+Why ArchLinux?
+
+Basicly, this magazine is related about ArchLinux, but a potential that i discovered on Arch, is the easy-way that you can have developing tools
+in the distro, in fact is one of main reasons why i like the distro.
+
+Why MySQL
+
+MySQL for me personally is the "basic" -if i can call it like that- opensource database engine. In fact, many tutorials around the network about lamp
+are oriented to MySQL. Perhaps, exists others Open Source Database engines (PostgreSQL, Sqlite)  but i think that PostgreSQL could be extensive to learn
+when you are starting, and SQLite can be very basic, then i choose MySQL because is _medium_.
+
+Why PHP?
+
+As i said before the P can be Perl or Python instead of PHP, but imho you will find more documentation, examples, and quick tutorials about developing
+in PHP.
+
+And know the stuff that really matters, the HowTo ;)
+
+Installing the stuff
+
+Simply as write:
+
+pacman -S lighttpd fastcgi php mysql
+
+(That should download some mb but don't worry, you surely can enter on our IRC channel #archlinux-br on freenode).
+
+<You should now that you are installing fastcgi to handle php scripts, fastcgi also can handle python, ruby, and perl scripts>
+
+Now let's configure all the stuff.
+
+Configuring PHP (/etc/php/php.ini)
+
+Well in this step we will just uncomment and modify some variables, i will try to explain it why, as well..
+
+<tip> php.ini uses ";" to lead the commenter character.</tip>
+
+Then do:
+
+# <editor> /etc/php/php.ini
+
+(Editor should be vim, emacs, nano, anything) 
+
+change short_open_tag = Off to short_open_tag = On (line 130) This feature is to have <? open tag active else you will have to write <?php
+but i recommend everytime that you will code on PHP write <?php instead of <?.
+
+error_reporting = E_ALL to error_reporting = E_ALL & ~E_NOTICE (line 352) Usually all distros by default have this variable configured in this way, and the reason
+is just because you can stop your app if these have errors, but surely you won't stop it if this just have "warnings".
+
+display_errors (line 371) By default this variable is setted Off, this is good if you want to hide errors on your app, but if you are on a developing environment
+(you just installing for developing) i recommend to turn this feature in On.
+
+register_globals (line 463) By default this variable is Off and, if you are a good programmer you won't change it, basicly register_globals in On
+allows you use POST, GET, SESSION, COOKIES etc like the same, by example $name can be $_POST['name'] or $_GET['name'], this is well explained better
+reading about SQL Injection, so you have to research that, because i can write another article explaining this.
+
+default_charset (line 507) By default this line is commented, when this line is commented the default character is your default environment, so i 
+particulary set it to UTF-8 even if i have setted UTF-8 configured.
+
+cgi.force_redirect = 1 (line 543) Uncomment this if you want to run PHP through fastcgi + lighttpd (like this tutorial recommends)
+
+Now uncomment these lines (1273,1274) extension=mysql.so and extension=mysqli.so, to use the php libraries for connecting mysql
+
+<tip>mysqli is a class to connecting via objects and not in the traditional way</tip>
+
+Configuring MySQL (/etc/my.cnf)
+
+my.cnf is the main file for configure mysql, but for start we won't configure it, by default should works :) (and i'll be a very extensive article)
+
+Perhaps, we have to set up our mysql stuff
+
+First of all, to run MySQL server you have to do:
+
+/etc/rc.d/mysqld start
+
+Then we have to set a new password for MySQL root user, by default is an empty password, you should do this:
+
+/usr/bin/mysqladmin -u root password 'new-password'
+/usr/bin/mysqladmin -u root -h yourhost password 'new-password'
+
+Remember that you have to remember your password, (at least write it under any shoe hehe j/k), recovering the mysql root password is possible, but 
+can be annoying.
+
+Configuring Lighttpd (/etc/lighttpd/lighttpd.conf)
+
+First of all make sure that the directory /var/run/lighttpd exists, else you have to create it (sometimes lighttpd installation didn't).
+
+Then you will proceed to edit the configuration file /etc/lighttpd/lighttpd.conf
+
+server.modules = (
+"mod_access",
+"mod_fastcgi",
+"mod_accesslog" )
+
+server.indexfiles = ( "index.html", "index.php" ) 
+
+fastcgi.server = (
+".php" =>
+  ( "localhost" =>
+    (
+      "socket" => "/tmp/php-fastcgi.socket",
+      "bin-path" => "/usr/bin/php-cgi"
+    )
+  )
+)
+
+And that's all, then start lighttpd:
+
+/etc/rc.d/lighttpd start
+
+<tip>Remember if you want to change your base directory (where you will put all your scripts and html files) if i forgot to mention the directory should be
+/home/lighttpd/html/ but you can change it, you must know if you pretend to use other directory you have to do chmod o+rx /parent/dir else you will 
+have a 403 error </tip>
+
+Plus+ (Configuring your pc to allow access to 80 port (lighttpd) and other ports)
+
+Well by default all connections are denied on Arch so you have to edit /etc/hosts.allow
+
+lighttpd : ALL : ALLOW
+# Uncomment the rest if you want to have mysql accesible from other places.
+# mysqld : ALL : ALLOW
+# mysqld-max : ALL : ALLOW
+
+I have to say that this tutorial will be very basic, but i don't want to do a thesis that you won't understand, i prefeer to do something short then you 
+maybe will get motivated to research more ;).
+
+Finally i have to thank to <brazilian translator here> for translate this document, and all people on #ArchLinux-BR under FreeNode.
+
+Obrigado.
+
+Angel 'angvp' Velasquez
+ArchLinux Trusted User
+jabber: angvplnx@jabber.linux.it
+
+
+
+
